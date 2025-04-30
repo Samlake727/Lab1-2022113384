@@ -14,6 +14,7 @@ import java.util.List;
  */
 
 // 这是一个github （2）R4修改
+// 这是一个github （2）R5修改
 public class TextGraphAnalyzer extends JFrame {
     // 有向图结构：邻接表，Map<源, Map<目标, 权重>>
     private final Map<String, Map<String, Integer>> graph = new HashMap<>();
