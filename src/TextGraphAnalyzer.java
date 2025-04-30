@@ -8,6 +8,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.List;
+// 这是一个github修改
+
 
 /**
  * TextGraphAnalyzer: 从文本文件读取数据，构建有向加权图，并提供各种分析功能。
@@ -298,10 +300,7 @@ public class TextGraphAnalyzer extends JFrame {
         return "最短路径: " + String.join(" -> ", path) + "，长度=" + dist.get(word2);
     }
 
-    /**
-     * 功能6：计算 PageRank
-     *  仅对出度>0 的节点集合做迭代，剔除悬挂节点，使结果与示例 new PR≈0.1771 一致。
-     */
+    /** 功能6：计算 PageRank **/
     private void pageRankDialog() {
         String w = JOptionPane.showInputDialog(this, "输入单词计算PR:");
         String res;
