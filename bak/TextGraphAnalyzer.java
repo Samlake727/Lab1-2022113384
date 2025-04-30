@@ -12,6 +12,8 @@ import java.util.List;
  * TextGraphAnalyzer: 从文本文件读取数据，构建有向加权图，并提供各种分析功能。
  * 新增：自动调用 Graphviz 渲染，并在界面中展示生成的图形。
  */
+
+// 这是一个github （2）R4修改
 public class TextGraphAnalyzer extends JFrame {
     // 有向图结构：邻接表，Map<源, Map<目标, 权重>>
     private final Map<String, Map<String, Integer>> graph = new HashMap<>();
