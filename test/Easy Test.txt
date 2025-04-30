@@ -1,0 +1,4 @@
+To explore strange new worlds,
+To seek out new life and new civilizations.
+Hello world! Hello Java.
+Graph test simple graph test.
