@@ -202,8 +202,9 @@ public class TextGraphAnalyzer extends JFrame {
         if (!has2) return "No " + word2 + " in the graph!";
 
         // 收集所有中间节点 mid，使得 word1->mid 且 mid->word2
-        Set<String> bridges = new HashSet<>();
-        for (String mid : graph.get(word1).keySet()) {
+        Set<String> bridges = new HashSet<>(); // 存放所有符合条件的桥接词
+        // 遍历从 word1 出发的所有直接邻接节点 mid
+        for (String mid : graph.get(word1).keySet()) { // mid又能直接到达 word2（即 mid 的邻接表中包含 word2）
             if (graph.get(mid).containsKey(word2)) {
                 bridges.add(mid);
             }
@@ -246,16 +247,17 @@ public class TextGraphAnalyzer extends JFrame {
         // 预处理：非字母替为空格，转小写并拆词
         String clean = inputText.toLowerCase().replaceAll("[^a-z]+", " ").trim();
         String[] words = clean.split("\s+");
-        List<String> result = new ArrayList<>();
-        Random rand = new Random();
+        List<String> result = new ArrayList<>(); // 用于存放最终生成的新文本单词序列
+        Random rand = new Random(); // 用于稍后随机选取桥接词
         // 遍历每对相邻单词
         for (int i = 0; i < words.length - 1; i++) {
             String w1 = words[i], w2 = words[i + 1];
-            result.add(w1);  // 先加入当前单词
+            result.add(w1);  // 每次循环先把当前单词w1加入result列表
             // 找出所有可能的桥接词
-            Set<String> bridges = new HashSet<>();
-            if (graph.containsKey(w1)) {
+            Set<String> bridges = new HashSet<>(); // 新建集合 bridges 来收集所有 “w1 → mid → w2” 的中间词 mid
+            if (graph.containsKey(w1)) { // 是否存在节点 w1
                 for (String mid : graph.get(w1).keySet()) {
+                    // 如果存在，遍历 w1 的所有出边目标 mid；再检查 mid 是否有出边指向 w2
                     if (graph.get(mid).containsKey(w2)) {
                         bridges.add(mid);
                     }
@@ -295,7 +297,7 @@ public class TextGraphAnalyzer extends JFrame {
         // 起点必须存在于图中
         if (!graph.containsKey(word1)) return "No " + word1 + " in the graph!";
 
-        // 若未输入终点，则进行批量计算
+        // 若未输入终点，则进行批量计算，使用 Dijkstra 算法计算起点到所有其他节点的最短路径
         if (word2 == null || word2.trim().isEmpty()) {
             // 初始化距离和前驱映射
             Map<String,Integer> dist = new HashMap<>();
@@ -314,7 +316,7 @@ public class TextGraphAnalyzer extends JFrame {
                 for (var e : graph.get(u).entrySet()) {
                     String v = e.getKey();   // 邻接节点 v
                     int w = e.getValue();     // 边 u->v 的权重
-                    // 松弛操作：判断通过 u 到达 v 的距离(dist[u] + w)是否小于当前记录的 dist[v]
+                    // 判断通过 u 到达 v 的距离(dist[u] + w)是否小于当前记录的 dist[v]
                     if (dist.get(u) + w < dist.get(v)) {
                         // 如果更短，则更新 v 的最短距离
                         dist.put(v, dist.get(u) + w);
@@ -409,8 +411,8 @@ public class TextGraphAnalyzer extends JFrame {
         // 如果图中没有该节点，则 PR 定义为 0
         if (!graph.containsKey(word)) return 0;
 
-        final double d = 0.85;            // 阻尼系数
-        int N = graph.size();             // 节点总数
+        final double d = 0.85; // 阻尼系数
+        int N = graph.size();  // 节点总数
         // pr 存储当前迭代的 PR 值，prNew 存储下一轮计算值
         Map<String, Double> pr = new HashMap<>(), prNew = new HashMap<>();
 
@@ -460,25 +462,27 @@ public class TextGraphAnalyzer extends JFrame {
         if (graph.isEmpty()) return;
 
         // 将所有节点装入列表，随机选择起点
-        List<String> nodes = new ArrayList<>(graph.keySet());
+        List<String> nodes = new ArrayList<>(graph.keySet()); // 将图中所有节点（graph.keySet()）拷贝到列表 nodes
         Random rand = new Random();
         String cur = nodes.get(rand.nextInt(nodes.size())); // 随机起点
 
-        StringBuilder walk = new StringBuilder(cur);
-        Set<String> seenEdges = new HashSet<>();
+        StringBuilder walk = new StringBuilder(cur); // 记录游走经过的节点序列，初始内容为起点 cur
+        Set<String> seenEdges = new HashSet<>(); // 存储已走过的有向边
 
         // 不断沿随机出边前进
         while (true) {
-            var outs = graph.get(cur);          // 当前节点的出边映射
-            if (outs.isEmpty()) break;          // 无出边则停止
+            var outs = graph.get(cur);  // 当前节点的出边映射
+            if (outs.isEmpty()) break; // 无出边则停止
 
             // 按权重随机选下一条边
-            int sum = outs.values().stream().mapToInt(x -> x).sum();
-            int r = rand.nextInt(sum), acc = 0;
-            String next = null;
+
+            int sum = outs.values().stream().mapToInt(x -> x).sum(); // 计算所有出边权重之和 sum
+            int r = rand.nextInt(sum), acc = 0; // 在[0, sum)范围内生成一个随机整数 r
+            String next = null; // 用于保存被选中的下一个节点
+            // 遍历每条出边，按权重区间检查随机落点 r
             for (var e : outs.entrySet()) {
-                acc += e.getValue();
-                if (r < acc) {
+                acc += e.getValue(); // 累加当前边的权重
+                if (r < acc) { // 如果随机落点小于累积权重,则选中这条边对应的目标节点
                     next = e.getKey();
                     break;
                 }
@@ -490,7 +494,7 @@ public class TextGraphAnalyzer extends JFrame {
             seenEdges.add(edge);
 
             // 记录路径并移动当前节点
-            walk.append(" ").append(next);
+            walk.append(" ").append(next); // next即为按照权重随机选出的下一个节点
             cur = next;
         }
 
