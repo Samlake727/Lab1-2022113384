@@ -455,7 +455,6 @@ public class TextGraphAnalyzer extends JFrame {
         return pr.get(word);
     }
 
-
     /** 功能7：随机游走并写文件 */
     private void randomWalk() {
         // 空图时直接返回
