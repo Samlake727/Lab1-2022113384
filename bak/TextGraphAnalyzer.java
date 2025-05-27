@@ -9,7 +9,7 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.List;
 /**
- * TextGraphAnalyzer: 从文本文件读取数据，构建有向加权图，并提供各种分析功能。
+ * te.TextGraphAnalyzer: 从文本文件读取数据，构建有向加权图，并提供各种分析功能。
  * 新增：自动调用 Graphviz 渲染，并在界面中展示生成的图形。
  */
 public class TextGraphAnalyzer extends JFrame {
