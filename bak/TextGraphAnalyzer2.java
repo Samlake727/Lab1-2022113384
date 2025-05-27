@@ -10,7 +10,7 @@ import java.util.*;
 import java.util.List;
 
 /**
- * TextGraphAnalyzer: 从文本文件读取数据，构建有向加权图，并提供各种分析功能。
+ * te.TextGraphAnalyzer: 从文本文件读取数据，构建有向加权图，并提供各种分析功能。
  * 变更：
  * 1. calcShortestPath 支持仅输入一个单词时，显示它到所有节点的最短路径。
  * 2. showDirectedGraph 方法签名改为带参：showDirectedGraph(Map<String,Map<String,Integer>> G)
