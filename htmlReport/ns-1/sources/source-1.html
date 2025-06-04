@@ -1,0 +1,508 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=GBK"> 
+  <title>Coverage Report > TextGraphAnalyzer</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">te</a>
+</div>
+
+<h1>Coverage Summary for Class: TextGraphAnalyzer (te)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">TextGraphAnalyzer</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (17/17)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    65.6%
+  </span>
+  <span class="absValue">
+    (86/131)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    83.5%
+  </span>
+  <span class="absValue">
+    (203/243)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package te;
+&nbsp;
+&nbsp;import javax.imageio.ImageIO;
+&nbsp;import javax.swing.*;
+&nbsp;import javax.swing.filechooser.FileNameExtensionFilter;
+&nbsp;import java.awt.*;
+&nbsp;import java.awt.image.BufferedImage;
+&nbsp;import java.io.*;
+&nbsp;import java.nio.file.Files;
+&nbsp;import java.nio.file.Paths;
+&nbsp;import java.util.*;
+&nbsp;import java.util.List;
+&nbsp;// 这是一个github修改
+&nbsp;
+&nbsp;
+&nbsp;/**
+&nbsp; * te.TextGraphAnalyzer: 从文本文件读取数据，构建有向加权图，并提供各种分析功能。
+&nbsp; * 变更：
+&nbsp; * 1. calcShortestPath 支持仅输入一个单词时，显示它到所有节点的最短路径。
+&nbsp; * 2. showDirectedGraph 方法签名改为带参：showDirectedGraph(Map&lt;String,Map&lt;String,Integer&gt;&gt; G)
+&nbsp; */
+&nbsp;public class TextGraphAnalyzer extends JFrame {
+&nbsp;    // 图的数据结构：邻接表
+<b class="fc">&nbsp;    private final Map&lt;String, Map&lt;String, Integer&gt;&gt; graph = new HashMap&lt;&gt;();</b>
+&nbsp;    private JTextArea outputArea;
+&nbsp;    private JLabel graphLabel;
+&nbsp;
+<b class="fc">&nbsp;    public TextGraphAnalyzer() {</b>
+<b class="fc">&nbsp;        setTitle(&quot;文本图分析器&quot;);</b>
+<b class="fc">&nbsp;        setSize(1000, 700);</b>
+<b class="fc">&nbsp;        setDefaultCloseOperation(EXIT_ON_CLOSE);</b>
+<b class="fc">&nbsp;        initUI();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private void initUI() {
+<b class="fc">&nbsp;        JPanel panel = new JPanel(new BorderLayout());</b>
+&nbsp;        // 输出区
+<b class="fc">&nbsp;        outputArea = new JTextArea();</b>
+<b class="fc">&nbsp;        outputArea.setEditable(false);</b>
+<b class="fc">&nbsp;        outputArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 14));</b>
+<b class="fc">&nbsp;        panel.add(new JScrollPane(outputArea), BorderLayout.SOUTH);</b>
+&nbsp;        // 图像展示区（带滚动条）
+<b class="fc">&nbsp;        graphLabel = new JLabel();</b>
+<b class="fc">&nbsp;        graphLabel.setHorizontalAlignment(JLabel.CENTER);</b>
+<b class="fc">&nbsp;        JScrollPane graphScroll = new JScrollPane(graphLabel);</b>
+<b class="fc">&nbsp;        panel.add(graphScroll, BorderLayout.CENTER);</b>
+&nbsp;        // 按钮区
+<b class="fc">&nbsp;        panel.add(getControls(), BorderLayout.NORTH);</b>
+<b class="fc">&nbsp;        setContentPane(panel);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private JPanel getControls() {
+<b class="fc">&nbsp;        JPanel controls = new JPanel();</b>
+<b class="fc">&nbsp;        String[] btnNames = {</b>
+&nbsp;                &quot;加载文本文件&quot;, &quot;展示有向图&quot;,
+&nbsp;                &quot;查询桥接词&quot;, &quot;生成新文本&quot;,
+&nbsp;                &quot;最短路径&quot;, &quot;计算PageRank&quot;, &quot;随机游走&quot;
+&nbsp;        };
+<b class="fc">&nbsp;        for (String name : btnNames) {</b>
+<b class="fc">&nbsp;            JButton btn = new JButton(name);</b>
+<b class="fc">&nbsp;            controls.add(btn);</b>
+<b class="pc">&nbsp;            switch (name) {</b>
+<b class="fc">&nbsp;                case &quot;加载文本文件&quot;: btn.addActionListener(e -&gt; loadFile()); break;</b>
+<b class="fc">&nbsp;                case &quot;展示有向图&quot;:   btn.addActionListener(e -&gt; showDirectedGraph()); break;</b>
+<b class="fc">&nbsp;                case &quot;查询桥接词&quot;:   btn.addActionListener(e -&gt; queryBridgeWordsDialog()); break;</b>
+<b class="fc">&nbsp;                case &quot;生成新文本&quot;:   btn.addActionListener(e -&gt; generateNewTextDialog()); break;</b>
+<b class="fc">&nbsp;                case &quot;最短路径&quot;:     btn.addActionListener(e -&gt; shortestPathDialog()); break;</b>
+<b class="fc">&nbsp;                case &quot;计算PageRank&quot;: btn.addActionListener(e -&gt; pageRankDialog()); break;</b>
+<b class="fc">&nbsp;                case &quot;随机游走&quot;:     btn.addActionListener(e -&gt; randomWalk()); break;</b>
+&nbsp;            }
+&nbsp;        }
+<b class="fc">&nbsp;        return controls;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public static void main(String[] args) {
+<b class="fc">&nbsp;        SwingUtilities.invokeLater(() -&gt; new TextGraphAnalyzer().setVisible(true));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    /** 功能1：加载并构建图，生成 .dot 并展示内容 */
+&nbsp;    private void loadFile() {
+<b class="fc">&nbsp;        JFileChooser chooser = new JFileChooser();</b>
+<b class="fc">&nbsp;        chooser.setFileFilter(new FileNameExtensionFilter(&quot;Text Files&quot;, &quot;txt&quot;));</b>
+<b class="pc">&nbsp;        if (chooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) return;</b>
+<b class="fc">&nbsp;        File file = chooser.getSelectedFile();</b>
+&nbsp;        try {
+<b class="fc">&nbsp;            String content = new String(Files.readAllBytes(file.toPath()));</b>
+<b class="fc">&nbsp;            buildGraph(content);</b>
+<b class="fc">&nbsp;            boolean ok = generateDotFile();</b>
+<b class="fc">&nbsp;            String msg = &quot;已加载并构建图，节点数=&quot; + graph.size()</b>
+<b class="pc">&nbsp;                    + (ok ? &quot;，graph.dot 生成成功。&quot; : &quot;，graph.dot 生成失败！&quot;);</b>
+<b class="fc">&nbsp;            outputArea.setText(msg);</b>
+<b class="pc">&nbsp;            if (ok) {</b>
+<b class="fc">&nbsp;                String dot = new String(Files.readAllBytes(Paths.get(&quot;graph.dot&quot;)));</b>
+<b class="fc">&nbsp;                JTextArea ta = new JTextArea(dot);</b>
+<b class="fc">&nbsp;                ta.setEditable(false);</b>
+<b class="fc">&nbsp;                ta.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));</b>
+<b class="fc">&nbsp;                JScrollPane sp = new JScrollPane(ta);</b>
+<b class="fc">&nbsp;                sp.setPreferredSize(new Dimension(600, 400));</b>
+<b class="fc">&nbsp;                JOptionPane.showMessageDialog(this, sp, &quot;graph.dot 内容&quot;, JOptionPane.INFORMATION_MESSAGE);</b>
+&nbsp;            } else {
+<b class="nc">&nbsp;                JOptionPane.showMessageDialog(this, &quot;graph.dot 生成失败！&quot;, &quot;错误&quot;, JOptionPane.ERROR_MESSAGE);</b>
+&nbsp;            }
+<b class="nc">&nbsp;        } catch (IOException ex) {</b>
+<b class="nc">&nbsp;            ex.printStackTrace();</b>
+<b class="nc">&nbsp;            JOptionPane.showMessageDialog(this, &quot;文件读取失败: &quot; + ex.getMessage(), &quot;错误&quot;, JOptionPane.ERROR_MESSAGE);</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    void buildGraph(String raw) {
+<b class="fc">&nbsp;        graph.clear();</b>
+<b class="fc">&nbsp;        String clean = raw.toLowerCase().replaceAll(&quot;[^a-z]+&quot;, &quot; &quot;);</b>
+<b class="fc">&nbsp;        String[] words = clean.trim().split(&quot;\\s+&quot;);</b>
+<b class="fc">&nbsp;        for (int i = 0; i &lt; words.length - 1; i++) {</b>
+<b class="fc">&nbsp;            String a = words[i], b = words[i + 1];</b>
+<b class="fc">&nbsp;            graph.putIfAbsent(a, new HashMap&lt;&gt;());</b>
+<b class="fc">&nbsp;            graph.get(a).put(b, graph.get(a).getOrDefault(b, 0) + 1);</b>
+<b class="fc">&nbsp;            graph.putIfAbsent(b, new HashMap&lt;&gt;());</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private boolean generateDotFile() {
+&nbsp;        try {
+<b class="fc">&nbsp;            StringBuilder dot = new StringBuilder(&quot;digraph G {\n&quot;);</b>
+<b class="fc">&nbsp;            for (String u : graph.keySet()) {</b>
+<b class="fc">&nbsp;                for (Map.Entry&lt;String, Integer&gt; e : graph.get(u).entrySet()) {</b>
+<b class="fc">&nbsp;                    dot.append(String.format(&quot;  \&quot;%s\&quot; -&gt; \&quot;%s\&quot; [label=%d];%n&quot;, u, e.getKey(), e.getValue()));</b>
+&nbsp;                }
+&nbsp;            }
+<b class="fc">&nbsp;            dot.append(&quot;}\n&quot;);</b>
+<b class="fc">&nbsp;            Files.write(Paths.get(&quot;graph.dot&quot;), dot.toString().getBytes());</b>
+<b class="fc">&nbsp;            return true;</b>
+<b class="nc">&nbsp;        } catch (IOException ex) {</b>
+<b class="nc">&nbsp;            ex.printStackTrace();</b>
+<b class="nc">&nbsp;            return false;</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * 功能2：渲染并显示有向图
+&nbsp;     */
+&nbsp;    private void showDirectedGraph() {
+&nbsp;        try {
+&nbsp;            // 重新生成 DOT
+<b class="fc">&nbsp;            generateDotFile();</b>
+<b class="fc">&nbsp;            String dotExe = &quot;C:\\Program Files (x86)\\Graphviz2.38\\bin\\dot.exe&quot;;</b>
+<b class="fc">&nbsp;            Process p = new ProcessBuilder(dotExe, &quot;-Tpng&quot;, &quot;graph.dot&quot;, &quot;-o&quot;, &quot;graph.png&quot;).start();</b>
+<b class="fc">&nbsp;            p.waitFor();</b>
+<b class="fc">&nbsp;            BufferedImage img = ImageIO.read(new File(&quot;graph.png&quot;));</b>
+<b class="fc">&nbsp;            graphLabel.setIcon(new ImageIcon(img));</b>
+<b class="fc">&nbsp;            String msg = &quot;有向图已渲染并显示 (graph.png)。&quot;;</b>
+<b class="fc">&nbsp;            outputArea.setText(msg);</b>
+<b class="fc">&nbsp;            JOptionPane.showMessageDialog(this, msg, &quot;渲染完成&quot;, JOptionPane.INFORMATION_MESSAGE);</b>
+<b class="nc">&nbsp;        } catch (Exception ex) {</b>
+<b class="nc">&nbsp;            ex.printStackTrace();</b>
+<b class="nc">&nbsp;            JOptionPane.showMessageDialog(this, &quot;渲染图形失败: &quot; + ex.getMessage(), &quot;错误&quot;, JOptionPane.ERROR_MESSAGE);</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    /** 功能3：查询桥接词 */
+&nbsp;    private void queryBridgeWordsDialog() {
+<b class="fc">&nbsp;        String w1 = JOptionPane.showInputDialog(this, &quot;输入 word1:&quot;);</b>
+<b class="fc">&nbsp;        String w2 = JOptionPane.showInputDialog(this, &quot;输入 word2:&quot;);</b>
+<b class="fc">&nbsp;        String res = queryBridgeWords(w1, w2);</b>
+<b class="fc">&nbsp;        outputArea.setText(res);</b>
+<b class="fc">&nbsp;        JOptionPane.showMessageDialog(this, res, &quot;查询桥接词结果&quot;, JOptionPane.INFORMATION_MESSAGE);</b>
+&nbsp;    }
+&nbsp;    public String queryBridgeWords(String word1, String word2) {
+<b class="pc">&nbsp;        if (word1 == null || word2 == null || word1.trim().isEmpty() || word2.trim().isEmpty()) {</b>
+<b class="nc">&nbsp;            return &quot;请输入两个单词！&quot;;</b>
+&nbsp;        }
+<b class="fc">&nbsp;        word1 = word1.toLowerCase();</b>
+<b class="fc">&nbsp;        word2 = word2.toLowerCase();</b>
+<b class="fc">&nbsp;        boolean has1 = graph.containsKey(word1), has2 = graph.containsKey(word2);</b>
+<b class="pc">&nbsp;        if (!has1 &amp;&amp; !has2) return &quot;No &quot; + word1 + &quot; and &quot; + word2 + &quot; in the graph!&quot;;</b>
+<b class="fc">&nbsp;        if (!has1) return &quot;No &quot; + word1 + &quot; in the graph!&quot;;</b>
+<b class="pc">&nbsp;        if (!has2) return &quot;No &quot; + word2 + &quot; in the graph!&quot;;</b>
+<b class="fc">&nbsp;        Set&lt;String&gt; bridges = new HashSet&lt;&gt;();</b>
+<b class="fc">&nbsp;        for (String mid : graph.get(word1).keySet())</b>
+<b class="fc">&nbsp;            if (graph.get(mid).containsKey(word2))</b>
+<b class="fc">&nbsp;                bridges.add(mid);</b>
+<b class="pc">&nbsp;        if (bridges.isEmpty())</b>
+<b class="nc">&nbsp;            return &quot;No bridge words from \&quot;&quot; + word1 + &quot;\&quot; to \&quot;&quot; + word2 + &quot;\&quot;!&quot;;</b>
+<b class="fc">&nbsp;        List&lt;String&gt; list = new ArrayList&lt;&gt;(bridges);</b>
+<b class="fc">&nbsp;        Collections.sort(list);</b>
+<b class="pc">&nbsp;        if (list.size() == 1) {</b>
+<b class="fc">&nbsp;            return &quot;The bridge words from \&quot;&quot; + word1 + &quot;\&quot; to \&quot;&quot; + word2 + &quot;\&quot; is: \&quot;&quot; + list.getFirst() + &quot;\&quot;&quot;;</b>
+&nbsp;        } else {
+<b class="nc">&nbsp;            StringJoiner sj = new StringJoiner(&quot;, &quot;);</b>
+<b class="nc">&nbsp;            for (int i = 0; i &lt; list.size() - 1; i++) sj.add(list.get(i));</b>
+<b class="nc">&nbsp;            return &quot;The bridge words from \&quot;&quot; + word1 + &quot;\&quot; to \&quot;&quot; + word2 + &quot;\&quot; are: &quot;</b>
+<b class="nc">&nbsp;                    + sj + &quot;, and &quot; + list.getLast();</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    /** 功能4：根据桥接词生成新文本 */
+&nbsp;    private void generateNewTextDialog() {
+<b class="fc">&nbsp;        String input = JOptionPane.showInputDialog(this, &quot;输入一行新文本:&quot;);</b>
+<b class="fc">&nbsp;        String res = generateNewText(input);</b>
+<b class="fc">&nbsp;        outputArea.setText(res);</b>
+<b class="fc">&nbsp;        JOptionPane.showMessageDialog(this, res, &quot;生成新文本结果&quot;, JOptionPane.INFORMATION_MESSAGE);</b>
+&nbsp;    }
+&nbsp;    public String generateNewText(String inputText) {
+<b class="pc">&nbsp;        if (inputText == null || inputText.trim().isEmpty()) return &quot;&quot;;</b>
+<b class="fc">&nbsp;        String clean = inputText.toLowerCase().replaceAll(&quot;[^a-z]+&quot;, &quot; &quot;).trim();</b>
+<b class="fc">&nbsp;        String[] words = clean.split(&quot;\\s+&quot;);</b>
+<b class="fc">&nbsp;        List&lt;String&gt; result = new ArrayList&lt;&gt;();</b>
+<b class="fc">&nbsp;        Random rand = new Random();</b>
+<b class="fc">&nbsp;        for (int i = 0; i &lt; words.length - 1; i++) {</b>
+<b class="fc">&nbsp;            String w1 = words[i], w2 = words[i + 1];</b>
+<b class="fc">&nbsp;            result.add(w1);</b>
+<b class="fc">&nbsp;            Set&lt;String&gt; bridges = new HashSet&lt;&gt;();</b>
+<b class="pc">&nbsp;            if (graph.containsKey(w1)) {</b>
+<b class="fc">&nbsp;                for (String mid : graph.get(w1).keySet())</b>
+<b class="fc">&nbsp;                    if (graph.get(mid).containsKey(w2))</b>
+<b class="fc">&nbsp;                        bridges.add(mid);</b>
+&nbsp;            }
+<b class="pc">&nbsp;            if (!bridges.isEmpty()) {</b>
+<b class="fc">&nbsp;                List&lt;String&gt; b = new ArrayList&lt;&gt;(bridges);</b>
+<b class="fc">&nbsp;                result.add(b.get(rand.nextInt(b.size())));</b>
+&nbsp;            }
+&nbsp;        }
+<b class="fc">&nbsp;        result.add(words[words.length - 1]);</b>
+<b class="fc">&nbsp;        return String.join(&quot; &quot;, result);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    /** 功能5：计算最短路径，支持只输入一个单词时批量输出 */
+&nbsp;    private void shortestPathDialog() {
+<b class="fc">&nbsp;        String w1 = JOptionPane.showInputDialog(this, &quot;输入起点 word1:&quot;);</b>
+<b class="fc">&nbsp;        String w2 = JOptionPane.showInputDialog(this, &quot;输入终点 word2 (可留空):&quot;);</b>
+<b class="fc">&nbsp;        String res = calcShortestPath(w1, w2);</b>
+<b class="fc">&nbsp;        outputArea.setText(res);</b>
+<b class="fc">&nbsp;        JOptionPane.showMessageDialog(this, res, &quot;最短路径结果&quot;, JOptionPane.INFORMATION_MESSAGE);</b>
+&nbsp;    }
+&nbsp;    public String calcShortestPath(String word1, String word2) {
+<b class="pc">&nbsp;        if (word1 == null || word1.trim().isEmpty()) return &quot;请输入起点单词！&quot;;</b>
+<b class="fc">&nbsp;        word1 = word1.toLowerCase();</b>
+<b class="pc">&nbsp;        if (!graph.containsKey(word1)) return &quot;No &quot; + word1 + &quot; in the graph!&quot;;</b>
+&nbsp;
+&nbsp;        // 若未输入终点，则对所有节点批量计算
+<b class="pc">&nbsp;        if (word2 == null || word2.trim().isEmpty()) {</b>
+&nbsp;            // Dijkstra 一次，得到 dist 和 prev
+<b class="fc">&nbsp;            Map&lt;String,Integer&gt; dist = new HashMap&lt;&gt;();</b>
+<b class="fc">&nbsp;            Map&lt;String,String&gt; prev = new HashMap&lt;&gt;();</b>
+<b class="fc">&nbsp;            for (String v : graph.keySet()) dist.put(v, Integer.MAX_VALUE);</b>
+<b class="fc">&nbsp;            dist.put(word1, 0);</b>
+<b class="fc">&nbsp;            PriorityQueue&lt;String&gt; pq = new PriorityQueue&lt;&gt;(Comparator.comparingInt(dist::get));</b>
+<b class="fc">&nbsp;            pq.add(word1);</b>
+<b class="fc">&nbsp;            while (!pq.isEmpty()) {</b>
+<b class="fc">&nbsp;                String u = pq.poll();</b>
+<b class="fc">&nbsp;                for (var e : graph.get(u).entrySet()) {</b>
+<b class="fc">&nbsp;                    String v = e.getKey(); int w = e.getValue();</b>
+<b class="fc">&nbsp;                    if (dist.get(u) + w &lt; dist.get(v)) {</b>
+<b class="fc">&nbsp;                        dist.put(v, dist.get(u) + w);</b>
+<b class="fc">&nbsp;                        prev.put(v, u);</b>
+<b class="fc">&nbsp;                        pq.add(v);</b>
+&nbsp;                    }
+&nbsp;                }
+&nbsp;            }
+&nbsp;            // 构造输出
+<b class="fc">&nbsp;            StringBuilder sb = new StringBuilder();</b>
+<b class="fc">&nbsp;            for (String target : graph.keySet()) {</b>
+<b class="fc">&nbsp;                if (target.equals(word1)) continue;</b>
+<b class="fc">&nbsp;                sb.append(&quot;从 &quot;).append(word1).append(&quot; 到 &quot;).append(target).append(&quot;：&quot;);</b>
+<b class="pc">&nbsp;                if (dist.get(target) == Integer.MAX_VALUE) {</b>
+<b class="nc">&nbsp;                    sb.append(&quot;不可达\n&quot;);</b>
+&nbsp;                } else {
+<b class="fc">&nbsp;                    List&lt;String&gt; path = new ArrayList&lt;&gt;();</b>
+<b class="fc">&nbsp;                    for (String cur = target; cur != null; cur = prev.get(cur)) path.add(cur);</b>
+<b class="fc">&nbsp;                    Collections.reverse(path);</b>
+<b class="fc">&nbsp;                    sb.append(String.join(&quot; -&gt; &quot;, path))</b>
+<b class="fc">&nbsp;                            .append(&quot; (长度=&quot;).append(dist.get(target)).append(&quot;)\n&quot;);</b>
+&nbsp;                }
+&nbsp;            }
+<b class="fc">&nbsp;            return sb.toString();</b>
+&nbsp;        }
+&nbsp;
+&nbsp;        // 否则按原逻辑计算单对最短路径
+<b class="nc">&nbsp;        word2 = word2.toLowerCase();</b>
+<b class="nc">&nbsp;        if (!graph.containsKey(word2)) return &quot;No &quot; + word2 + &quot; in the graph!&quot;;</b>
+<b class="nc">&nbsp;        Map&lt;String,Integer&gt; dist = new HashMap&lt;&gt;();</b>
+<b class="nc">&nbsp;        Map&lt;String,String&gt; prev = new HashMap&lt;&gt;();</b>
+<b class="nc">&nbsp;        for (String v : graph.keySet()) dist.put(v, Integer.MAX_VALUE);</b>
+<b class="nc">&nbsp;        dist.put(word1, 0);</b>
+<b class="nc">&nbsp;        PriorityQueue&lt;String&gt; pq = new PriorityQueue&lt;&gt;(Comparator.comparingInt(dist::get));</b>
+<b class="nc">&nbsp;        pq.add(word1);</b>
+<b class="nc">&nbsp;        while (!pq.isEmpty()) {</b>
+<b class="nc">&nbsp;            String u = pq.poll();</b>
+<b class="nc">&nbsp;            if (u.equals(word2)) break;</b>
+<b class="nc">&nbsp;            for (var e : graph.get(u).entrySet()) {</b>
+<b class="nc">&nbsp;                String v = e.getKey(); int w = e.getValue();</b>
+<b class="nc">&nbsp;                if (dist.get(u) + w &lt; dist.get(v)) {</b>
+<b class="nc">&nbsp;                    dist.put(v, dist.get(u) + w);</b>
+<b class="nc">&nbsp;                    prev.put(v, u);</b>
+<b class="nc">&nbsp;                    pq.add(v);</b>
+&nbsp;                }
+&nbsp;            }
+&nbsp;        }
+<b class="nc">&nbsp;        if (dist.get(word2) == Integer.MAX_VALUE) return &quot;不可达!&quot;;</b>
+<b class="nc">&nbsp;        List&lt;String&gt; path = new ArrayList&lt;&gt;();</b>
+<b class="nc">&nbsp;        for (String cur = word2; cur != null; cur = prev.get(cur)) path.add(cur);</b>
+<b class="nc">&nbsp;        Collections.reverse(path);</b>
+<b class="nc">&nbsp;        return &quot;最短路径: &quot; + String.join(&quot; -&gt; &quot;, path) + &quot;，长度=&quot; + dist.get(word2);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    /** 功能6：计算 PageRank **/
+&nbsp;    private void pageRankDialog() {
+<b class="fc">&nbsp;        String w = JOptionPane.showInputDialog(this, &quot;输入单词计算PR:&quot;);</b>
+&nbsp;        String res;
+<b class="pc">&nbsp;        if (w == null || w.trim().isEmpty()) {</b>
+<b class="nc">&nbsp;            res = &quot;请输入单词！&quot;;</b>
+&nbsp;        } else {
+<b class="fc">&nbsp;            double pr = calPageRank(w.toLowerCase());</b>
+<b class="fc">&nbsp;            res = w + &quot; PR=&quot; + String.format(&quot;%.4f&quot;, pr);</b>
+&nbsp;        }
+<b class="fc">&nbsp;        outputArea.setText(res);</b>
+<b class="fc">&nbsp;        JOptionPane.showMessageDialog(this, res, &quot;PageRank 结果&quot;, JOptionPane.INFORMATION_MESSAGE);</b>
+&nbsp;    }
+&nbsp;    public double calPageRank(String word) {
+<b class="pc">&nbsp;        if (!graph.containsKey(word)) return 0;</b>
+<b class="fc">&nbsp;        final double d = 0.85;</b>
+<b class="fc">&nbsp;        int N = graph.size();</b>
+&nbsp;        // 初始化：每个节点的 PR = 1/N
+<b class="fc">&nbsp;        Map&lt;String, Double&gt; pr = new HashMap&lt;&gt;(), prNew = new HashMap&lt;&gt;();</b>
+<b class="fc">&nbsp;        graph.keySet().forEach(v -&gt; pr.put(v, 1.0 / N));</b>
+&nbsp;
+&nbsp;        // 迭代计算
+<b class="fc">&nbsp;        for (int iter = 0; iter &lt; 100; iter++) {</b>
+&nbsp;            // 1. 计算所有悬挂节点的总 PR
+<b class="fc">&nbsp;            double danglingSum = 0;</b>
+<b class="fc">&nbsp;            for (String u : graph.keySet()) {</b>
+<b class="fc">&nbsp;                if (graph.get(u).isEmpty()) {</b>
+<b class="fc">&nbsp;                    danglingSum += pr.get(u);</b>
+&nbsp;                }
+&nbsp;            }
+&nbsp;
+&nbsp;            // 2. 对每个节点 v 计算新的 PR
+<b class="fc">&nbsp;            for (String v : graph.keySet()) {</b>
+&nbsp;                // 来自入链的贡献
+<b class="fc">&nbsp;                double sum = 0;</b>
+<b class="fc">&nbsp;                for (String u : graph.keySet()) {</b>
+<b class="fc">&nbsp;                    if (graph.get(u).containsKey(v)) {</b>
+<b class="fc">&nbsp;                        double weight = graph.get(u).get(v);</b>
+<b class="fc">&nbsp;                        double outSum = graph.get(u).values().stream().mapToInt(x -&gt; x).sum();</b>
+<b class="fc">&nbsp;                        sum += pr.get(u) * (weight / outSum);</b>
+&nbsp;                    }
+&nbsp;                }
+&nbsp;                // 悬挂节点均摊 + 随机跳转
+<b class="fc">&nbsp;                double danglingContribution = danglingSum / N;</b>
+<b class="fc">&nbsp;                double teleport = (1 - d) / N;</b>
+<b class="fc">&nbsp;                prNew.put(v, teleport + d * (sum + danglingContribution));</b>
+&nbsp;            }
+&nbsp;
+&nbsp;            // 3. 准备下一轮
+<b class="fc">&nbsp;            pr.putAll(prNew);</b>
+&nbsp;        }
+&nbsp;
+&nbsp;        // 返回指定单词的 PR 值
+<b class="fc">&nbsp;        return pr.get(word);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;
+&nbsp;    /** 功能7：随机游走 */
+&nbsp;    private void randomWalk() {
+<b class="pc">&nbsp;        if (graph.isEmpty()) return;</b>
+<b class="fc">&nbsp;        List&lt;String&gt; nodes = new ArrayList&lt;&gt;(graph.keySet());</b>
+<b class="fc">&nbsp;        Random rand = new Random();</b>
+<b class="fc">&nbsp;        String cur = nodes.get(rand.nextInt(nodes.size()));</b>
+<b class="fc">&nbsp;        StringBuilder walk = new StringBuilder(cur);</b>
+<b class="fc">&nbsp;        Set&lt;String&gt; seenEdges = new HashSet&lt;&gt;();</b>
+&nbsp;        while (true) {
+<b class="fc">&nbsp;            var outs = graph.get(cur);</b>
+<b class="fc">&nbsp;            if (outs.isEmpty()) break;</b>
+<b class="fc">&nbsp;            int sum = outs.values().stream().mapToInt(x-&gt;x).sum(), acc = 0;</b>
+<b class="fc">&nbsp;            int r = rand.nextInt(sum);</b>
+<b class="fc">&nbsp;            String next = null;</b>
+<b class="pc">&nbsp;            for (var e : outs.entrySet()) {</b>
+<b class="fc">&nbsp;                acc += e.getValue();</b>
+<b class="fc">&nbsp;                if (r &lt; acc) { next = e.getKey(); break; }</b>
+&nbsp;            }
+<b class="fc">&nbsp;            String edge = cur + &quot;-&gt;&quot; + next;</b>
+<b class="pc">&nbsp;            if (seenEdges.contains(edge)) break;</b>
+<b class="fc">&nbsp;            seenEdges.add(edge);</b>
+<b class="fc">&nbsp;            walk.append(&quot; &quot;).append(next);</b>
+<b class="fc">&nbsp;            cur = next;</b>
+&nbsp;        }
+<b class="fc">&nbsp;        String res = walk.toString();</b>
+<b class="fc">&nbsp;        outputArea.setText(res);</b>
+<b class="fc">&nbsp;        JOptionPane.showMessageDialog(this, res, &quot;随机游走结果&quot;, JOptionPane.INFORMATION_MESSAGE);</b>
+<b class="fc">&nbsp;        try { Files.write(Paths.get(&quot;random_walk.txt&quot;), res.getBytes()); }</b>
+<b class="fc">&nbsp;        catch (IOException e) { e.printStackTrace(); }</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2025-05-28 02:20</div>
+</div>
+</body>
+</html>

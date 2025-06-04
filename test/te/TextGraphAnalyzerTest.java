@@ -4,10 +4,11 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class TextGraphAnalyzerTest extends TextGraphAnalyzer {
+class TextGraphAnalyzerTest {
 
     // 用于测试的文本内容
-    private static final String TEST_TEXT = "To explore strange new worlds, To seek out new life and new civilizations";
+    private static final String TEST_TEXT =
+            "To explore strange new worlds, To seek out new life and new civilizations";
 
     @Test
     public void testQueryBridgeWords_Case1() {
